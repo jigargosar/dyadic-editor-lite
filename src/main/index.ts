@@ -1,8 +1,23 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Tray, Menu, globalShortcut } from 'electron'
 import { join } from 'path'
 import fs from 'node:fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+// Settled on Shift+Space after probing candidates on this machine — all of
+// these registered successfully except the two marked, so any could work,
+// but Shift+Space is what we're actually using. Left commented (not
+// deleted) as a record of what was tried and confirmed available:
+//   ✓ Shift+Space              <- active
+//   ✓ Control+Space
+//   ✓ Alt+Space
+//   ✓ Control+Shift+Space
+//   ✓ Control+Alt+Space
+//   ✓ Alt+Shift+Space
+//   ✗ Super+Space              (register() returned false — already taken)
+//   ✗ CommandOrControl+Space   (register() returned false — already taken)
+//   ✓ Control+Shift+Alt+Space
+const SHORTCUT_CANDIDATES = ['Shift+Space']
 
 // A second launch attempt loses the race: quit before anything else in this
 // file runs, so it never opens its own window or touches the filesystem.
@@ -11,6 +26,31 @@ if (!gotLock) {
   app.quit()
 } else {
   let win: BrowserWindow | null = null
+  let tray: Tray | null = null
+  let isQuitting = false
+
+  // Used by tray left-click, tray "Show", and second-instance — always
+  // brings the window up, never hides it. Launching a second instance or
+  // clicking "Show" should never have the surprising effect of hiding.
+  function showAndFocusWindow(): void {
+    if (!win) return
+    if (win.isMinimized()) win.restore()
+    if (!win.isVisible()) win.show()
+    win.focus()
+  }
+
+  // Used only by the global hotkey: toggles instead of always-show, so
+  // pressing it again while the window is already up and focused hides it
+  // back to tray — the quick-recall pattern (Spotlight/PowerToys Run style)
+  // rather than a one-way "always bring to front" action.
+  function toggleWindowVisibility(): void {
+    if (!win) return
+    if (win.isVisible() && win.isFocused()) {
+      win.hide()
+    } else {
+      showAndFocusWindow()
+    }
+  }
 
   function createWindow(): void {
     win = new BrowserWindow({
@@ -29,6 +69,14 @@ if (!gotLock) {
       win?.show()
     })
 
+    // Minimize-to-tray: closing the window hides it instead of quitting,
+    // unless a real quit was requested (tray menu > Quit sets isQuitting).
+    win.on('close', (e) => {
+      if (isQuitting) return
+      e.preventDefault()
+      win?.hide()
+    })
+
     win.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url)
       return { action: 'deny' }
@@ -38,6 +86,70 @@ if (!gotLock) {
       win.loadURL(process.env['ELECTRON_RENDERER_URL'])
     } else {
       win.loadFile(join(__dirname, '../renderer/index.html'))
+    }
+  }
+
+  function createTray(): void {
+    tray = new Tray(icon)
+    tray.setToolTip('Dyadic')
+
+    // Left-click: always show-and-focus (not the toggle behavior — see
+    // showAndFocusWindow's comment above for why this stays one-way).
+    tray.on('click', () => {
+      showAndFocusWindow()
+    })
+
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        { label: 'Show', click: () => showAndFocusWindow() },
+        { type: 'separator' },
+        {
+          label: 'Quit',
+          click: () => {
+            isQuitting = true
+            app.quit()
+          }
+        }
+      ])
+    )
+  }
+
+  // For each candidate in SHORTCUT_CANDIDATES: register() can return false
+  // (already taken), throw (malformed string), or return true while the OS
+  // silently refuses it anyway — so each candidate gets try/catch AND an
+  // isRegistered() double-check, not just a trusted boolean. Prints the
+  // outcome so failures are visible rather than silent.
+  function registerShortcuts(): void {
+    const results: { combo: string; ok: boolean; reason?: string }[] = []
+
+    for (const combo of SHORTCUT_CANDIDATES) {
+      let registered = false
+      try {
+        registered = globalShortcut.register(combo, () => {
+          toggleWindowVisibility()
+        })
+      } catch (err) {
+        results.push({ combo, ok: false, reason: `threw: ${(err as Error).message}` })
+        continue
+      }
+
+      if (!registered) {
+        results.push({ combo, ok: false, reason: 'register() returned false (likely taken by another app)' })
+        continue
+      }
+
+      const confirmed = globalShortcut.isRegistered(combo)
+      if (!confirmed) {
+        results.push({ combo, ok: false, reason: 'register() true but isRegistered() false' })
+        globalShortcut.unregister(combo)
+        continue
+      }
+
+      results.push({ combo, ok: true })
+    }
+
+    for (const r of results) {
+      console.log(r.ok ? `[shortcut] Registered: ${r.combo}` : `[shortcut] Failed: ${r.combo} — ${r.reason}`)
     }
   }
 
@@ -79,9 +191,7 @@ if (!gotLock) {
   // Fires in this (first) instance when a second launch attempt is blocked
   // by the lock above — focus the existing window instead of ignoring it.
   app.on('second-instance', () => {
-    if (!win) return
-    if (win.isMinimized()) win.restore()
-    win.focus()
+    showAndFocusWindow()
   })
 
   app.whenReady().then(async () => {
@@ -130,15 +240,23 @@ if (!gotLock) {
     })
 
     createWindow()
+    createTray()
+    registerShortcuts()
 
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
   })
 
-  app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit()
-    }
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
   })
+
+  app.on('before-quit', () => {
+    isQuitting = true
+  })
+
+  // No window-all-closed quit: closing the window hides to tray instead
+  // (see the 'close' handler above), so the app stays resident until the
+  // tray's Quit item (or before-quit) actually sets isQuitting.
 }
