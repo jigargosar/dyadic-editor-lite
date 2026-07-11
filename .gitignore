@@ -1,0 +1,22 @@
+node_modules
+dist
+out
+.DS_Store
+.eslintcache
+*.log*
+
+# IDE
+.vscode
+.idea
+
+# OS
+Thumbs.db
+
+# Environment
+.env
+.env.*
+*.local.json
+
+# Misc
+.parcel-cache
+*.tsbuildinfo
