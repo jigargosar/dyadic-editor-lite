@@ -61,7 +61,7 @@ export default function App(): React.JSX.Element {
       setVimEnabled(session.vimEnabled)
       setReady(true)
     }
-    boot()
+    boot().catch(console.error)
     return () => {
       cancelled = true
     }
