@@ -34,9 +34,22 @@ if (!gotLock) {
   // clicking "Show" should never have the surprising effect of hiding.
   function showAndFocusWindow(): void {
     if (!win) return
+    // Restore (un-minimize) first, then show() — show() is what brings the
+    // window to the foreground on Windows, so it must be the last state change
+    // before focus, or the focus() gets dropped. Show/focus unconditionally so
+    // an already-visible but unfocused window is still pulled to the front.
     if (win.isMinimized()) win.restore()
-    if (!win.isVisible()) win.show()
+    win.show()
     win.focus()
+  }
+
+  // Inverse of showAndFocusWindow, and the only way to hide. Invariant: hiding
+  // is always minimize→hide, never a bare hide — minimize hands focus back to
+  // the previously active app, hide then drops us to the tray.
+  function hideToTray(): void {
+    if (!win) return
+    win.minimize()
+    win.hide()
   }
 
   // Used only by the global hotkey: toggles instead of always-show, so
@@ -46,7 +59,7 @@ if (!gotLock) {
   function toggleWindowVisibility(): void {
     if (!win) return
     if (win.isVisible() && win.isFocused()) {
-      win.hide()
+      hideToTray()
     } else {
       showAndFocusWindow()
     }
@@ -66,7 +79,8 @@ if (!gotLock) {
     })
 
     win.on('ready-to-show', () => {
-      win?.show()
+      // After showing, focus (invariant) — same path as every other show.
+      showAndFocusWindow()
     })
 
     // Minimize-to-tray: closing the window hides it instead of quitting,
@@ -74,6 +88,13 @@ if (!gotLock) {
     win.on('close', (e) => {
       if (isQuitting) return
       e.preventDefault()
+      hideToTray()
+    })
+
+    // Native minimize can't be canceled (the event fires *after* minimizing),
+    // so route it to the same place as close: hide to the tray. This also makes
+    // "every minimize is followed by a hide" hold for the OS minimize button.
+    win.on('minimize', () => {
       win?.hide()
     })
 

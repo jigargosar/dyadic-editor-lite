@@ -8,6 +8,7 @@ import { Compartment, EditorState, EditorSelection } from '@codemirror/state'
 import { EditorView, placeholder } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
 import { vim, Vim } from '@replit/codemirror-vim'
+import { CommandPalette, type Command } from './CommandPalette'
 
 const SAVE_DEBOUNCE_MS = 300
 
@@ -31,11 +32,13 @@ export default function App(): React.JSX.Element {
   const [tabs, setTabs] = useState<Tab[]>([])
   const [activeTabId, setActiveTabId] = useState<string | null>(null)
   const [vimEnabled, setVimEnabled] = useState(false)
+  const [dirtyIds, setDirtyIds] = useState<Set<string>>(() => new Set())
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   const parentRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const vimCompartmentRef = useRef(new Compartment())
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const activeContentRef = useRef('')
 
   // Kept current every render so the one-time Vim.defineEx callbacks below
@@ -44,6 +47,20 @@ export default function App(): React.JSX.Element {
   const activeTabIdRef = useRef<string | null>(null)
   tabsRef.current = tabs
   activeTabIdRef.current = activeTabId
+
+  // Per-tab "unsaved changes pending" tracking, surfaced as a dot in the tab
+  // bar. Set on edit, cleared whenever we actually dispatch a write to disk.
+  const markDirty = useCallback((id: string) => {
+    setDirtyIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)))
+  }, [])
+  const markSaved = useCallback((id: string) => {
+    setDirtyIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -100,9 +117,21 @@ export default function App(): React.JSX.Element {
     async (id: string) => {
       const closingIndex = tabsRef.current.findIndex((t) => t.id === id)
       const remaining = tabsRef.current.filter((t) => t.id !== id)
-      await window.api.deleteTab(id)
 
       if (remaining.length === 0) {
+        // Last tab. Prefer the live buffer over disk (autosave is debounced,
+        // so disk can lag a keystroke behind).
+        const content =
+          id === activeTabIdRef.current
+            ? activeContentRef.current
+            : await window.api.getTabContent(id)
+        // Already empty: closing would just swap one empty tab for another, so
+        // do nothing. Only when it has content do we clear it and hand back a
+        // fresh Untitled tab.
+        if (content.trim() === '') return
+
+        await window.api.deleteTab(id)
+        markSaved(id)
         const freshId = 't' + Date.now()
         await window.api.saveTabContent(freshId, '')
         const freshTabs = [{ id: freshId, title: 'Untitled' }]
@@ -112,6 +141,8 @@ export default function App(): React.JSX.Element {
         return
       }
 
+      await window.api.deleteTab(id)
+      markSaved(id)
       setTabs(remaining)
       if (activeTabIdRef.current === id) {
         const next = remaining[Math.max(0, closingIndex - 1)]
@@ -121,7 +152,7 @@ export default function App(): React.JSX.Element {
         persistSession(remaining, activeTabIdRef.current as string)
       }
     },
-    [persistSession]
+    [persistSession, markSaved]
   )
 
   function cycleTab(direction: 1 | -1): void {
@@ -183,7 +214,8 @@ export default function App(): React.JSX.Element {
                 '&': { height: '100%', backgroundColor: 'transparent', color: 'inherit' },
                 '.cm-content': { padding: '1rem 1.25rem', caretColor: '#e5e5e5' },
                 '.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.6' },
-                '&.cm-focused': { outline: 'none' }
+                '&.cm-focused': { outline: 'none' },
+                '.cm-placeholder': { color: '#525252' }
               },
               { dark: true }
             ),
@@ -191,12 +223,14 @@ export default function App(): React.JSX.Element {
               if (!update.docChanged) return
               const text = update.state.doc.toString()
               activeContentRef.current = text
+              markDirty(activeTabId as string)
               setTabs((prev) =>
                 prev.map((t) => (t.id === activeTabId ? { ...t, title: firstLineTitle(text) } : t))
               )
               clearTimeout(saveTimerRef.current)
               saveTimerRef.current = setTimeout(() => {
                 window.api.saveTabContent(activeTabId as string, activeContentRef.current)
+                markSaved(activeTabId as string)
               }, SAVE_DEBOUNCE_MS)
             })
           ]
@@ -212,6 +246,7 @@ export default function App(): React.JSX.Element {
       clearTimeout(saveTimerRef.current)
       if (viewRef.current) {
         window.api.saveTabContent(activeTabId as string, activeContentRef.current)
+        markSaved(activeTabId as string)
         viewRef.current.destroy()
         viewRef.current = null
       }
@@ -221,7 +256,10 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     function flush(): void {
-      if (activeTabId) window.api.saveTabContent(activeTabId, activeContentRef.current)
+      if (activeTabId) {
+        window.api.saveTabContent(activeTabId, activeContentRef.current)
+        markSaved(activeTabId)
+      }
     }
     window.addEventListener('blur', flush)
     window.addEventListener('beforeunload', flush)
@@ -229,7 +267,37 @@ export default function App(): React.JSX.Element {
       window.removeEventListener('blur', flush)
       window.removeEventListener('beforeunload', flush)
     }
-  }, [activeTabId])
+  }, [activeTabId, markSaved])
+
+  // Swallow Tab inside the vim `:` command line (`.cm-vim-panel` input). The
+  // library's input only handles Enter/Esc, so an un-prevented Tab falls
+  // through to the browser and yanks DOM focus to the next control (the VIM
+  // button) instead of staying in the command line.
+  useEffect(() => {
+    const el = parentRef.current
+    if (!el) return
+    function onKeyDown(e: KeyboardEvent): void {
+      if (e.key !== 'Tab') return
+      const target = e.target as HTMLElement | null
+      if (target && target.closest('.cm-vim-panel')) e.preventDefault()
+    }
+    el.addEventListener('keydown', onKeyDown, true)
+    return () => el.removeEventListener('keydown', onKeyDown, true)
+  }, [])
+
+  // Ctrl/Cmd+K toggles the command palette. Captured at the window so it wins
+  // before CodeMirror/vim can claim the key, whatever currently holds focus.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent): void {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault()
+        e.stopPropagation()
+        setPaletteOpen((o) => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [])
 
   function toggleVim(): void {
     const next = !vimEnabled
@@ -249,6 +317,37 @@ export default function App(): React.JSX.Element {
     await closeTabById(id)
   }
 
+  const closePalette = useCallback(() => {
+    setPaletteOpen(false)
+    // Hand focus back to the editor so typing resumes without another click.
+    requestAnimationFrame(() => viewRef.current?.focus())
+  }, [])
+
+  const isMac = navigator.platform.toUpperCase().includes('MAC')
+  const paletteKeyLabel = isMac ? '⌘K' : 'Ctrl+K'
+
+  // Rebuilt each render so labels/state (e.g. the vim toggle text) stay live.
+  const commands: Command[] = [
+    { id: 'new-tab', title: 'New Tab', hint: ':tabnew', run: () => void newTab() },
+    {
+      id: 'close-tab',
+      title: 'Close Tab',
+      hint: ':tabclose',
+      run: () => {
+        const a = activeTabIdRef.current
+        if (a) void closeTabById(a)
+      }
+    },
+    { id: 'next-tab', title: 'Next Tab', hint: 'gt', run: () => cycleTab(1) },
+    { id: 'prev-tab', title: 'Previous Tab', hint: 'gT', run: () => cycleTab(-1) },
+    {
+      id: 'toggle-vim',
+      title: vimEnabled ? 'Disable Vim' : 'Enable Vim',
+      hint: vimEnabled ? 'on' : 'off',
+      run: toggleVim
+    }
+  ]
+
   return (
     <div className="flex h-screen w-screen flex-col bg-neutral-900">
       <div className="flex flex-shrink-0 border-b border-neutral-800 bg-neutral-950">
@@ -256,20 +355,38 @@ export default function App(): React.JSX.Element {
           <div
             key={t.id}
             onClick={() => switchTab(t.id)}
-            className={`flex max-w-[180px] cursor-pointer items-center gap-2 overflow-hidden border-r border-neutral-800 px-3 py-2 text-[13px] whitespace-nowrap ${
+            className={`flex cursor-pointer items-center gap-2 overflow-hidden border-r border-neutral-800 px-3 py-2 text-[13px] whitespace-nowrap ${
               t.id === activeTabId ? 'bg-neutral-800 text-white' : 'text-neutral-500'
             }`}
           >
-            <span className="overflow-hidden text-ellipsis">{t.title}</span>
+            <span
+              title={dirtyIds.has(t.id) ? 'Unsaved changes pending' : 'Saved'}
+              className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
+                dirtyIds.has(t.id) ? 'bg-amber-400' : 'bg-transparent'
+              }`}
+            />
+            <span className="min-w-[3rem] max-w-[10rem] overflow-hidden text-ellipsis">
+              {t.title}
+            </span>
             <span onClick={(e) => closeTab(t.id, e)} className="opacity-60 hover:opacity-100">
               ×
             </span>
           </div>
         ))}
-        <div onClick={newTab} className="cursor-pointer px-3 py-2 text-neutral-500 hover:text-neutral-300">
+        <div
+          onClick={newTab}
+          className="cursor-pointer px-3 py-2 text-neutral-500 hover:text-neutral-300"
+        >
           +
         </div>
-        <div className="ml-auto px-3 py-2">
+        <div className="ml-auto flex items-center gap-1 px-2 py-1">
+          <button
+            onClick={() => setPaletteOpen(true)}
+            title={`Commands (${paletteKeyLabel})`}
+            className="rounded px-2 py-1 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
+          >
+            {paletteKeyLabel}
+          </button>
           <button
             onClick={toggleVim}
             className={`rounded px-2.5 py-1 text-xs text-neutral-200 ${
@@ -281,6 +398,7 @@ export default function App(): React.JSX.Element {
         </div>
       </div>
       <div ref={parentRef} className="min-w-0 flex-1 overflow-auto text-neutral-200" />
+      {paletteOpen && <CommandPalette commands={commands} onClose={closePalette} />}
     </div>
   )
 }
