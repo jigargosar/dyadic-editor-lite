@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Window Behavior Flowchart</title>
+<style>
+  :root {
+    --font-sans: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
+
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --ink: #1b2330;
+    --ink-soft: #55617a;
+    --line: #dde2ea;
+    --accent: #b45309;
+    --accent-soft: #fef3c7;
+    --accent-line: #d97706;
+
+    --good: #16a34a;
+    --good-soft: #dcfce7;
+    --muted: #6b7280;
+    --muted-soft: #e5e7eb;
+    --stop: #dc2626;
+    --stop-soft: #fee2e2;
+
+    /* Schematic panel stays light in both themes — it's a printed diagram. */
+    --schematic-bg: #eef1f6;
+    --schematic-grid: #dbe0ea;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1319;
+      --surface: #171d26;
+      --ink: #e7ebf2;
+      --ink-soft: #98a2b6;
+      --line: #29313d;
+      --accent: #fbbf24;
+      --accent-soft: #3a2f12;
+      --accent-line: #f59e0b;
+      --good: #4ade80;
+      --good-soft: #14321f;
+      --muted: #9ca3af;
+      --muted-soft: #262b33;
+      --stop: #f87171;
+      --stop-soft: #3a1717;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6f9; --surface: #ffffff; --ink: #1b2330; --ink-soft: #55617a;
+    --line: #dde2ea; --accent: #b45309; --accent-soft: #fef3c7; --accent-line: #d97706;
+    --good: #16a34a; --good-soft: #dcfce7; --muted: #6b7280; --muted-soft: #e5e7eb;
+    --stop: #dc2626; --stop-soft: #fee2e2;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1319; --surface: #171d26; --ink: #e7ebf2; --ink-soft: #98a2b6;
+    --line: #29313d; --accent: #fbbf24; --accent-soft: #3a2f12; --accent-line: #f59e0b;
+    --good: #4ade80; --good-soft: #14321f; --muted: #9ca3af; --muted-soft: #262b33;
+    --stop: #f87171; --stop-soft: #3a1717;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 74rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 2.5rem) 4rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+  h1 {
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0 0 0.75rem;
+  }
+  .lede {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 46ch;
+    margin: 0 0 1rem;
+  }
+  .source {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--accent-line);
+    padding-left: 0.7rem;
+  }
+  .source code { color: var(--ink); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.1rem 1.6rem;
+    align-items: center;
+    margin: 2.25rem 0 1.25rem;
+    padding: 1rem 1.15rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+  }
+  .legend-item b { color: var(--ink); font-weight: 600; }
+  .glyph { flex: none; width: 34px; height: 22px; display: grid; place-items: center; }
+  .g-oval { border-radius: 999px; background: #e2e8f0; border: 1.5px solid #475569; }
+  .g-rect { border-radius: 3px; background: #ffffff; border: 1.5px solid #94a3b8; }
+  .g-diamond {
+    width: 20px; height: 20px; background: #fef3c7; border: 1.5px solid #d97706;
+    transform: rotate(45deg); border-radius: 2px;
+  }
+  .g-arrow { font-family: var(--font-mono); color: #64748b; font-size: 1.1rem; }
+
+  /* Schematic panel — deliberately light in both themes */
+  .schematic {
+    background:
+      linear-gradient(var(--schematic-grid) 1px, transparent 1px) 0 0 / 22px 22px,
+      linear-gradient(90deg, var(--schematic-grid) 1px, transparent 1px) 0 0 / 22px 22px,
+      var(--schematic-bg);
+    border: 1px solid #cfd6e2;
+    border-radius: 14px;
+    padding: 1.5rem 1rem;
+    overflow-x: auto;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.06);
+  }
+  .schematic-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin: 0 0 0.5rem 0.25rem;
+  }
+  .schematic + .schematic-label { margin-top: 1.75rem; }
+  .schematic .mermaid { display: flex; justify-content: center; }
+  .schematic .mermaid svg { max-width: 100%; height: auto; }
+  /* Hidden until Mermaid renders, so raw diagram text never flashes on screen. */
+  .schematic .mermaid:not([data-processed]) { visibility: hidden; }
+  #diagram-error {
+    display: none;
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--stop-soft);
+    color: var(--stop);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  /* Prose blocks below */
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 1.1rem;
+    margin-top: 2.25rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.25rem 1.35rem;
+  }
+  .card.warn { border-color: color-mix(in srgb, var(--accent-line) 45%, var(--line)); }
+  h2 {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.85rem;
+    font-family: var(--font-mono);
+  }
+  ol.rules { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.7rem; }
+  ol.rules li { padding-left: 0.2rem; }
+  ul.unver { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.85rem; }
+  ul.unver li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+  .tag {
+    align-self: start;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    border-radius: 5px;
+    padding: 0.12rem 0.4rem;
+    white-space: nowrap;
+    margin-top: 0.15rem;
+  }
+  code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+  .inline-code {
+    background: var(--muted-soft);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+  }
+  .foot {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .foot code { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <p class="eyebrow">Desktop window · behavior map</p>
+  <h1>How the window shows, hides, and quits</h1>
+  <p class="lede">Every hotkey, button, and tray action — and exactly where each one leaves the window. Read each diamond as a yes/no fork.</p>
+  <p class="source">Drawn from <code>src/main/index.ts</code> · describes <b>intended</b> behavior — some paths are not yet verified on Windows.</p>
+
+  <div class="legend" aria-label="Shape key">
+    <span class="legend-item"><span class="glyph"><span class="g-oval" style="width:100%;height:100%"></span></span><span><b>Oval</b> — a start or end point</span></span>
+    <span class="legend-item"><span class="glyph"><span class="g-rect" style="width:100%;height:100%"></span></span><span><b>Rectangle</b> — the app does something</span></span>
+    <span class="legend-item"><span class="glyph"><span class="g-diamond"></span></span><span><b>Diamond</b> — a yes/no decision</span></span>
+    <span class="legend-item"><span class="glyph g-arrow">&rarr;</span><span><b>Arrow</b> — the next step</span></span>
+  </div>
+
+  <div id="diagram-error">Diagram engine failed to load. Open this file over a local server, or check the browser console.</div>
+
+  <p class="schematic-label">Schematic 1 — which routine each trigger runs</p>
+  <div class="schematic">
+    <pre class="mermaid">
+flowchart TD
+  hk(["Shift+Space"]) --> d1{"Window visible AND focused?"}
+  d1 -- Yes --> HIDE(["HIDE TO TRAY &#9656;"])
+  d1 -- No --> SHOW(["SHOW &amp; FOCUS &#9656;"])
+  tr(["Tray click · 'Show' · 2nd launch · Boot"]) --> SHOW
+  mb(["Minimize button"]) --> HIDE
+  xb(["X / close button"]) --> d2{"Real quit? (tray 'Quit')"}
+  d2 -- Yes --> QUIT(["APP QUITS"])
+  d2 -- No --> HIDE
+
+  classDef entry fill:#e2e8f0,stroke:#475569,color:#1e293b;
+  classDef dec fill:#fef3c7,stroke:#d97706,color:#78350f;
+  classDef pill fill:#f1f5f9,stroke:#64748b,color:#334155;
+  classDef stop fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+  class hk,tr,mb,xb entry;
+  class d1,d2 dec;
+  class SHOW,HIDE pill;
+  class QUIT stop;
+    </pre>
+  </div>
+
+  <p class="schematic-label">Schematic 2 — what each routine does, step by step</p>
+  <div class="schematic">
+    <pre class="mermaid">
+flowchart TD
+  subgraph SHOWG["SHOW &amp; FOCUS"]
+    direction TB
+    s1{"Already minimized?"} -- Yes --> r["Restore"]
+    s1 -- No --> sw["Show window"]
+    r --> sw
+    sw --> f["Give it focus"]
+  end
+  f --> vf(["Visible + focused"])
+
+  subgraph HIDEG["HIDE TO TRAY"]
+    direction TB
+    mn["Minimize"] --> hd["Hide"]
+  end
+  hd --> ht(["Hidden in tray"])
+
+  classDef dec fill:#fef3c7,stroke:#d97706,color:#78350f;
+  classDef act fill:#ffffff,stroke:#94a3b8,color:#334155;
+  classDef good fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef muted fill:#e5e7eb,stroke:#6b7280,color:#374151;
+  class s1 dec;
+  class r,sw,f,mn,hd act;
+  class vf good;
+  class ht muted;
+  style SHOWG fill:transparent,stroke:#b6bfce,color:#64748b;
+  style HIDEG fill:transparent,stroke:#b6bfce,color:#64748b;
+    </pre>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>The two rules everything follows</h2>
+      <ol class="rules">
+        <li><b>Hiding is always minimize, then hide.</b> Minimize first hands focus back to whatever app you were using; hide then drops the window to the tray. A bare hide is never used.</li>
+        <li><b>Showing is always followed by focus.</b> Restore it if minimized, then show it, then focus it — focus comes last so it isn't dropped.</li>
+      </ol>
+    </div>
+    <div class="card warn">
+      <h2>Not confirmed yet</h2>
+      <ul class="unver">
+        <li><span class="tag">assumption</span><span>On Windows, <code>show()</code> is what brings the window to the front — so focus <em>must</em> come after show/restore or it gets dropped.</span></li>
+        <li><span class="tag">assumption</span><span>The native minimize can't be canceled, so we route it straight to hide instead of preventing it.</span></li>
+        <li><span class="tag">risk</span><span>That <code>Shift+Space</code> re-focuses reliably on every cycle — the "visible but unfocused &rarr; front" path is the main worry.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="foot">Companion to the text version at <code>docs/window-states.md</code> (state table + transition table). This page renders the same logic as a diagram, drawn by Mermaid (bundled locally as <code>docs/mermaid.min.js</code>).</p>
+</div>
+
+<script src="./mermaid.min.js"></script>
+<script>
+  (function () {
+    function fail(e) {
+      var box = document.getElementById('diagram-error');
+      if (box) box.style.display = 'block';
+      if (e) console.error('[window-states] Mermaid render failed:', e);
+    }
+    try {
+      if (!window.mermaid) return fail(new Error('mermaid global not found — mermaid.min.js did not load'));
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+          fontFamily: 'ui-monospace, Consolas, monospace',
+          fontSize: '14px',
+          lineColor: '#64748b',
+          primaryColor: '#e2e8f0',
+          primaryBorderColor: '#475569',
+          primaryTextColor: '#1e293b'
+        }
+      });
+      mermaid.run({ querySelector: '.mermaid' }).catch(fail);
+    } catch (e) {
+      fail(e);
+    }
+  })();
+</script>
+</body>
+</html>
