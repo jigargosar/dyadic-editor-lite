@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6D5EF9"/>
+      <stop offset="1" stop-color="#3B1FB0"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="block" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5EEAD4"/>
+      <stop offset="1" stop-color="#22D3A6"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bg)"/>
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#sheen)"/>
+
+  <!-- text lines -->
+  <g fill="#ffffff" opacity="0.85">
+    <rect x="140" y="168" width="180" height="34" rx="17"/>
+    <rect x="140" y="316" width="120" height="34" rx="17"/>
+  </g>
+  <!-- ghost line under block (dyad hint) -->
+  <rect x="140" y="242" width="90" height="34" rx="17" fill="#ffffff" opacity="0.35"/>
+
+  <!-- vim block cursor on middle line -->
+  <rect x="252" y="228" width="120" height="62" rx="16" fill="url(#block)"/>
+</svg>

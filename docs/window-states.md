@@ -19,29 +19,52 @@ against Electron docs or by repeat hands-on testing on Windows.
 > `minimize` event handler immediately calls `hide()`, so a native minimize
 > lands the window in **Hidden (tray)**.
 
-## Flowchart
+## Flowcharts
+
+Two views. **Schematic 1** — which routine each trigger runs. **Schematic 2** —
+what each routine (show / hide) actually does, step by step. Diamonds are yes/no
+decisions.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Booting
-    Booting --> VisibleFocused: ready-to-show / showAndFocusWindow()
+flowchart TD
+  hk(["Shift+Space"]) --> d1{"Window visible AND focused?"}
+  d1 -- Yes --> HIDE(["HIDE TO TRAY"])
+  d1 -- No --> SHOW(["SHOW & FOCUS"])
+  tr(["Tray click · 'Show' · 2nd launch · Boot"]) --> SHOW
+  mb(["Minimize button"]) --> HIDE
+  xb(["X / close button"]) --> d2{"Real quit? (tray 'Quit')"}
+  d2 -- Yes --> QUIT(["APP QUITS"])
+  d2 -- No --> HIDE
 
-    VisibleFocused --> VisibleUnfocused: click another app (OS, no handler)
-    VisibleUnfocused --> VisibleFocused: Shift+Space · tray click · tray Show · second launch / showAndFocusWindow()
+  classDef dec fill:#fef3c7,stroke:#d97706,color:#78350f;
+  classDef stop fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+  class d1,d2 dec;
+  class QUIT stop;
+```
 
-    VisibleFocused --> HiddenTray: Shift+Space (toggle) / hideToTray()
-    VisibleFocused --> HiddenTray: X button / preventDefault + hideToTray()
-    VisibleFocused --> HiddenTray: minimize button / hide()
+```mermaid
+flowchart TD
+  subgraph SHOWG["SHOW & FOCUS"]
+    direction TB
+    s1{"Already minimized?"} -- Yes --> r["Restore"]
+    s1 -- No --> sw["Show window"]
+    r --> sw
+    sw --> f["Give it focus"]
+  end
+  f --> vf(["Visible + focused"])
 
-    VisibleUnfocused --> HiddenTray: X button / hideToTray()
-    VisibleUnfocused --> HiddenTray: minimize button / hide()
+  subgraph HIDEG["HIDE TO TRAY"]
+    direction TB
+    mn["Minimize"] --> hd["Hide"]
+  end
+  hd --> ht(["Hidden in tray"])
 
-    HiddenTray --> VisibleFocused: Shift+Space · tray click · tray Show · second launch / showAndFocusWindow()
-
-    VisibleFocused --> Quit: tray Quit / isQuitting = true, app.quit()
-    VisibleUnfocused --> Quit: tray Quit
-    HiddenTray --> Quit: tray Quit
-    Quit --> [*]
+  classDef dec fill:#fef3c7,stroke:#d97706,color:#78350f;
+  classDef good fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef muted fill:#e5e7eb,stroke:#6b7280,color:#374151;
+  class s1 dec;
+  class vf good;
+  class ht muted;
 ```
 
 ## Transition table
