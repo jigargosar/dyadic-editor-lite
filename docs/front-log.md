@@ -1,4 +1,4 @@
-# Backlog
+# front-log
 
 ## Pending (2026-07-13) — pre-commit capture
 
