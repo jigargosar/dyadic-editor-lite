@@ -3,6 +3,7 @@ import { join } from 'path'
 import fs from 'node:fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import trayIcon from '../../resources/tray.ico?asset'
 
 // Settled on Shift+Space after probing candidates on this machine — all of
 // these registered successfully except the two marked, so any could work,
@@ -111,7 +112,7 @@ if (!gotLock) {
   }
 
   function createTray(): void {
-    tray = new Tray(icon)
+    tray = new Tray(trayIcon)
     tray.setToolTip('Dyadic')
 
     // Left-click: always show-and-focus (not the toggle behavior — see

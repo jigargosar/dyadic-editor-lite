@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tray/small-size variant of v1.svg: ghost cursor and sheen removed
+       (invisible below ~48px), block enlarged and centered so the glyph
+       stays legible down to 16px. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6D5EF9"/>
+      <stop offset="1" stop-color="#3B1FB0"/>
+    </linearGradient>
+    <linearGradient id="block" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5EEAD4"/>
+      <stop offset="1" stop-color="#22D3A6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- tile -->
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#bg)"/>
+
+  <!-- primary vim block cursor, centered and bolder -->
+  <rect x="161" y="131" width="190" height="250" rx="36" fill="url(#block)"/>
+</svg>
