@@ -1,5 +1,12 @@
 # front-log
 
+## Workflow
+- Items live loosely at top; related ones sit together (no headers, just gathered).
+- Done (bottom): a requirements doc — each entry states what the app must do.
+  An item enters only once it's genuinely done and tested.
+- Loop: build → hand over test steps → if it passes, we write its requirement into Done.
+- Any and all edits must be explicitly approved.
+
 ## Pending (2026-07-13) — pre-commit capture
 
 > Everything in this section lives only in the current uncommitted diff + this working session. Captured here so it survives the commit (we won't re-read the diff). Uncommitted files: `src/renderer/src/App.tsx`, `src/renderer/src/CommandPalette.tsx` (new), `src/main/index.ts`, `docs/backlog.md`.
