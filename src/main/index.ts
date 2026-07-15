@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Tray, Menu, globalShortcut } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Tray, Menu, globalShortcut, nativeImage } from 'electron'
 import { join } from 'path'
 import fs from 'node:fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -29,6 +29,17 @@ if (!gotLock) {
   let win: BrowserWindow | null = null
   let tray: Tray | null = null
   let isQuitting = false
+
+  // TEMPORARY format test: load one file per format via nativeImage and report
+  // whether Electron decoded it (empty=false) — the conclusive "which format
+  // works for a tray icon" answer. png/ico/svg from resources/fmttest/.
+  function checkTrayFormats(): void {
+    for (const ext of ['png', 'ico', 'svg']) {
+      const p = join(__dirname, '../../resources/fmttest', `icon.${ext}`)
+      const img = nativeImage.createFromPath(p)
+      console.log(`[fmt ${ext}] empty=${img.isEmpty()} size=`, img.getSize())
+    }
+  }
 
   // Used by tray left-click, tray "Show", and second-instance — always
   // brings the window up, never hides it. Launching a second instance or
@@ -263,6 +274,7 @@ if (!gotLock) {
 
     createWindow()
     createTray()
+    checkTrayFormats()
     registerShortcuts()
 
     app.on('activate', function () {
