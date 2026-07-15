@@ -111,3 +111,6 @@
 ## Done
 
 _A requirements doc: each entry states what the app must do. An item enters only once it's genuinely done and tested._
+
+- Ctrl+K opens a command palette.
+- Vim `:` command line (Ex commands).

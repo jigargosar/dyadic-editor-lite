@@ -285,11 +285,11 @@ export default function App(): React.JSX.Element {
     return () => el.removeEventListener('keydown', onKeyDown, true)
   }, [])
 
-  // Ctrl/Cmd+K toggles the command palette. Captured at the window so it wins
+  // Ctrl+K toggles the command palette. Captured at the window so it wins
   // before CodeMirror/vim can claim the key, whatever currently holds focus.
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
-      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+      if (e.ctrlKey && !e.altKey && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault()
         e.stopPropagation()
         setPaletteOpen((o) => !o)
@@ -323,8 +323,7 @@ export default function App(): React.JSX.Element {
     requestAnimationFrame(() => viewRef.current?.focus())
   }, [])
 
-  const isMac = navigator.platform.toUpperCase().includes('MAC')
-  const paletteKeyLabel = isMac ? '⌘K' : 'Ctrl+K'
+  const paletteKeyLabel = 'Ctrl+K'
 
   // Rebuilt each render so labels/state (e.g. the vim toggle text) stay live.
   const commands: Command[] = [
