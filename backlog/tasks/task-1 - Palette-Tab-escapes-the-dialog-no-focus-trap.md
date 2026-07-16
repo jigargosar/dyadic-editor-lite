@@ -4,11 +4,12 @@ title: 'Palette: Tab escapes the dialog (no focus trap)'
 status: To Do
 assignee: []
 created_date: '2026-07-15 16:13'
-updated_date: '2026-07-16 04:15'
+updated_date: '2026-07-16 06:13'
 labels:
   - bug
 milestone: m-0
 dependencies: []
+type: bug
 ordinal: 1000
 ---
 
