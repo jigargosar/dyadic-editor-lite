@@ -31,7 +31,6 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 ## Conventions
 
 - Path alias `@renderer/*` → `src/renderer/src/*`.
-- `docs/front-log.md` is a running dev changelog (narrative, not a spec) — update it when capturing notable changes.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <!-- backlog.md-instructions-version: 1.48.0 -->
@@ -40,6 +39,7 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 ## Backlog.md Workflow
 
 This project uses Backlog.md for task and project management.
+Never use cd command if the src (current working dir) and dest are same.
 
 **For every user request in this project, run `backlog instructions overview` before answering or taking action.**
 
