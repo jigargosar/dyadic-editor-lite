@@ -33,7 +33,6 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 - Path alias `@renderer/*` → `src/renderer/src/*`.
 - Milestones: `v1` is the active release; `Icebox` holds wanted-but-unscheduled work. 
 - Park future ideas in Icebox; pull them into a release when planning.
-- Assign milestones by exact existing name — a typo creates an unremovable phantom.
 - Never use `cd` when the current working dir and destination are the same.
 
 ## Backlog
