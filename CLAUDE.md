@@ -17,6 +17,8 @@ Use **pnpm** (only `pnpm-lock.yaml` exists). Scripts call `npm run ...` internal
 - `pnpm lint` / `pnpm format` — eslint (flat config) / prettier.
 - `pnpm gen:icons` — regenerates build/resource icons from mockups.
 
+Recommended editor: **VSCode** with the **ESLint** and **Prettier** extensions.
+
 There is **no test framework and no CI** — verify changes with `typecheck` and by running the app.
 
 ## Architecture (load-bearing)
