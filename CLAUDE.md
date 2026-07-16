@@ -31,6 +31,7 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 ## Conventions
 
 - Path alias `@renderer/*` → `src/renderer/src/*`.
+- Milestones: `v1` is the active release; `Icebox` holds wanted-but-unscheduled work. Park future ideas in Icebox; pull them into a release when planning.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <!-- backlog.md-instructions-version: 1.48.0 -->
