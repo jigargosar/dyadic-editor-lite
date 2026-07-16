@@ -4,13 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Electron desktop app: a tab-based plain-text editor with vim emulation (CodeMirror 6 + `@replit/codemirror-vim`) and plain-file autosave. React 19 renderer, Tailwind v4. Single package, not a monorepo.
+Electron desktop app: a tab-based plain-text editor with vim emulation (CodeMirror 6 + `@replit/codemirror-vim`) and plain-file autosave. React 19 renderer, Tailwind v4. Single package, not a monorepo. and pnpm
 
 **Targets Windows only** — no macOS/Linux support intended.
 
 ## Commands
-
-Use **pnpm** (only `pnpm-lock.yaml` exists). Scripts call `npm run ...` internally, but install/run via pnpm.
 
 - `pnpm dev` — run app (electron-vite dev).
 - `pnpm typecheck` — runs both `typecheck:node` and `typecheck:web` (`tsc --noEmit` against separate tsconfigs). Run this to verify changes; `pnpm build` runs it first.
