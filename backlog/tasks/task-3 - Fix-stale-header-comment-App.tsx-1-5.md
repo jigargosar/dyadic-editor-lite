@@ -1,10 +1,10 @@
 ---
 id: TASK-3
 title: 'Fix stale header comment App.tsx:1-5'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-07-15 16:24'
-updated_date: '2026-07-16 06:13'
+updated_date: '2026-07-16 06:24'
 labels:
   - chore
 milestone: m-0

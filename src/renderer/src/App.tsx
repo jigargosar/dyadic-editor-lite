@@ -1,8 +1,3 @@
-// Dyadic Lite: tabs + vim + plain-file autosave. No CRDT, no tray, no
-// global shortcut, no drag-reorder. Tab shortcuts come from vim itself
-// (:tabnew/:tabclose/:tabn/:tabp, gt/gT) via Vim.defineEx/Vim.map — the
-// library implements neither natively, so we bind them to our own tab
-// functions rather than inventing separate Electron-level keybindings.
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Compartment, EditorState, EditorSelection } from '@codemirror/state'
 import { EditorView, placeholder } from '@codemirror/view'
