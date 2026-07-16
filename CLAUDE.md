@@ -33,7 +33,16 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 ## Conventions
 
 - Path alias `@renderer/*` → `src/renderer/src/*`.
-- Milestones: `v1` is the active release; `Icebox` holds wanted-but-unscheduled work. Park future ideas in Icebox; pull them into a release when planning.
+- Milestones: `v1` is the active release; `Icebox` holds wanted-but-unscheduled work. 
+- Park future ideas in Icebox; pull them into a release when planning.
+- Assign milestones by exact existing name — a typo creates an unremovable phantom.
+- Never use `cd` when the current working dir and destination are the same.
+
+## Backlog
+
+- Never delete backlog files — it breaks referential integrity. Archive instead (`backlog task archive`).
+- Assign milestones by exact existing name — a typo creates a phantom.
+- Auto-generated instructions below — do not edit inside; add rules here.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <!-- backlog.md-instructions-version: 1.48.0 -->
@@ -42,7 +51,6 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 ## Backlog.md Workflow
 
 This project uses Backlog.md for task and project management.
-Never use cd command if the src (current working dir) and dest are same.
 
 **For every user request in this project, run `backlog instructions overview` before answering or taking action.**
 
@@ -56,6 +64,7 @@ Before task lifecycle actions, read the matching detailed guide:
 Use `backlog <command> --help` before running unfamiliar commands. Help shows options, fields, and examples.
 
 Do not edit Backlog task, draft, document, decision, or milestone markdown files directly. Use the `backlog` CLI so metadata, relationships, and history stay consistent.
+
 
 </CRITICAL_INSTRUCTION>
 <!-- BACKLOG.MD GUIDELINES END -->
