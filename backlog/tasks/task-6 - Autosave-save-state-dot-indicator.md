@@ -4,9 +4,11 @@ title: Autosave save-state dot indicator
 status: To Do
 assignee: []
 created_date: '2026-07-16 05:42'
+updated_date: '2026-07-17 07:45'
 labels: []
 milestone: m-0
-dependencies: []
+dependencies:
+  - TASK-13
 type: feature
 ordinal: 6000
 ---
