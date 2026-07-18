@@ -28,3 +28,4 @@ Goal (what, not how) and constraints, given once, built without checkpoints.
 - A proper tray menu.
 - Fancy icons used throughout the app.
 - Slightly dark theme, fully polished, but yet minimalistic and clean interface.
+- Ctrl+Tab jumps to the most-recently-used tab, same as Chrome's Ctrl+Tab behavior.
