@@ -10,3 +10,10 @@ own flat file under `docs/` and link it from the bullet.
 ## In Progress
 
 ## To Do
+
+## Done
+
+- Window show/hide/focus + minimize-to-tray — hotkey and tray now both toggle
+  based on `isVisible()`; see `docs/window-states.md`. Manually tested by
+  Jigar (hotkey, tray left-click, tray right-click, minimize, X button).
+  Second-launch and fresh-boot behavior not retested this round.
