@@ -10,6 +10,7 @@ Goal (what, not how) and constraints, given once, built without checkpoints.
 
 - You never have to name anything up front — tabs title themselves from what you type.
 - It shows only the tabs and the editor.
+- Ctrl+T reopens the last closed tab.
 
 ## Locked (coarse) — Backend
 
