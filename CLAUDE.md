@@ -15,12 +15,6 @@ Electron desktop app: a tab-based plain-text editor with vim emulation (CodeMirr
 - `pnpm lint` / `pnpm format` — eslint (flat config) / prettier.
 - `pnpm gen:icons` — regenerates build/resource icons from mockups.
 
-Recommended editor: **VSCode** with the **ESLint** and **Prettier** extensions.
-
-There is **no test framework and no CI** — verify changes with `typecheck` and by running the app.
-
-Claude Code has no desktop GUI automation for this app (only browser automation exists, and this isn't a browser app) — it can start `pnpm dev` and check the log, but window/tray/focus behavior (hotkeys, tray click, tray right-click menu, minimize, X button) must be manually tested by Jigar until that's automated.
-
 ## Architecture (load-bearing)
 
 - **Process split**: `src/main/index.ts` (Electron main), `src/preload/index.ts` (contextBridge), `src/renderer/src/` (React — `App.tsx` is the core editor, `CommandPalette.tsx`).
@@ -33,37 +27,14 @@ Claude Code has no desktop GUI automation for this app (only browser automation 
 ## Conventions
 
 - Path alias `@renderer/*` → `src/renderer/src/*`.
-- Milestones: `v1` is the active release; `Icebox` holds wanted-but-unscheduled work. 
+- Milestones: `v1` is the active release; `Icebox` holds wanted-but-unscheduled work.
 - Park future ideas in Icebox; pull them into a release when planning.
 - Never use `cd` when the current working dir and destination are the same.
 
-## Backlog
+## Task tracking
 
-- Never delete backlog files — it breaks referential integrity. Archive instead (`backlog task archive`).
-- Assign milestones by exact existing name — a typo creates a phantom.
-- Auto-generated instructions below — do not edit inside; add rules here.
+- `docs/board.md`, `docs/icebox.md`, `docs/archive.md`.
 
-<!-- BACKLOG.MD GUIDELINES START -->
-<!-- backlog.md-instructions-version: 1.48.0 -->
-<CRITICAL_INSTRUCTION>
+## .Backlog - obsolete pending migration
 
-## Backlog.md Workflow
-
-This project uses Backlog.md for task and project management.
-
-**For every user request in this project, run `backlog instructions overview` before answering or taking action.**
-
-Use the overview to decide whether to search, read, create, or update Backlog tasks.
-
-Before task lifecycle actions, read the matching detailed guide:
-- `backlog instructions task-creation` before creating or splitting tasks
-- `backlog instructions task-execution` before planning, changing status or assignee, adding a plan or implementation notes, or implementing task work
-- `backlog instructions task-finalization` before checking acceptance criteria, writing final summaries, or moving tasks to terminal statuses
-
-Use `backlog <command> --help` before running unfamiliar commands. Help shows options, fields, and examples.
-
-Do not edit Backlog task, draft, document, decision, or milestone markdown files directly. Use the `backlog` CLI so metadata, relationships, and history stay consistent.
-
-
-</CRITICAL_INSTRUCTION>
-<!-- BACKLOG.MD GUIDELINES END -->
+- Never delete backlog files until full migration
