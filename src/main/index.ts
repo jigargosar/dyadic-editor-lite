@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import trayIcon from '../../resources/tray.ico?asset'
+import { newTabId } from '../shared/tabId'
 
 // Settled on Control+Shift+Space and Control+Alt+Space after probing candidates
 // on this machine — all of these registered successfully except the two
@@ -247,7 +248,7 @@ if (!gotLock) {
     ipcMain.handle('dyadic:bootSession', async () => {
       const session = await readSession()
       if (!session || !session.tabs || session.tabs.length === 0) {
-        const id = 't' + Date.now()
+        const id = newTabId()
         const fresh: Session = { tabs: [{ id }], activeTabId: id, vimEnabled: false }
         await atomicWrite(sessionFile, JSON.stringify(fresh))
         await atomicWrite(join(tabsDir, id + '.txt'), '')

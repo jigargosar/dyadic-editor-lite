@@ -4,6 +4,7 @@ import { EditorView, placeholder } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
 import { vim, Vim } from '@replit/codemirror-vim'
 import { CommandPalette, type Command } from './CommandPalette'
+import { newTabId } from '../../shared/tabId'
 
 const SAVE_DEBOUNCE_MS = 300
 
@@ -100,7 +101,7 @@ export default function App(): React.JSX.Element {
   )
 
   const newTab = useCallback(async () => {
-    const id = 't' + Date.now()
+    const id = newTabId()
     await window.api.saveTabContent(id, '')
     const nextTabs = [...tabsRef.current, { id, title: 'Untitled' }]
     setTabs(nextTabs)
@@ -127,7 +128,7 @@ export default function App(): React.JSX.Element {
 
         await window.api.deleteTab(id)
         markSaved(id)
-        const freshId = 't' + Date.now()
+        const freshId = newTabId()
         await window.api.saveTabContent(freshId, '')
         const freshTabs = [{ id: freshId, title: 'Untitled' }]
         setTabs(freshTabs)

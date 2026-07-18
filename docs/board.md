@@ -11,9 +11,13 @@ own flat file under `docs/` and link it from the bullet.
 
 ## To Do
 
+- Saves are fire-and-forget: the saved indicator clears before the write is
+  confirmed. Data-loss risk. (was TASK-13, HIGH)
+- Temp-file collision in atomicWrite can corrupt tab content. (was TASK-14, HIGH)
+- Corrupt session.json silently orphans every tab, no warning. (was TASK-15, HIGH)
+- Quit doesn't wait for a pending save flush. (was TASK-16, MEDIUM)
+
 ## Done
 
-- Window show/hide/focus + minimize-to-tray — hotkey and tray now both toggle
-  based on `isVisible()`; see `docs/window-states.md`. Manually tested by
-  Jigar (hotkey, tray left-click, tray right-click, minimize, X button).
-  Second-launch and fresh-boot behavior not retested this round.
+- Window show/hide/focus + minimize-to-tray toggle rework. See `docs/window-states.md`.
+- Tab ids: `Date.now()` → `randomUUID()`, fixes same-millisecond collisions.
