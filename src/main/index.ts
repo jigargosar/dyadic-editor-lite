@@ -41,16 +41,15 @@ if (!gotLock) {
     }
   }
 
-  // Used by tray left-click, tray "Show", and second-instance — always
-  // brings the window up, never hides it. Launching a second instance or
-  // clicking "Show" should never have the surprising effect of hiding.
+  // Used by tray "Show" and second-instance — always brings the window up,
+  // never hides it. Launching a second instance or clicking "Show" should
+  // never have the surprising effect of hiding.
   function showAndFocusWindow(): void {
     if (!win) return
     // Restore (un-minimize) first, then show() — show() is what brings the
     // window to the foreground on Windows, so it must be the last state change
     // before focus, or the focus() gets dropped. Show/focus unconditionally so
     // an already-visible but unfocused window is still pulled to the front.
-    if (win.isMinimized()) win.restore()
     win.show()
     win.focus()
   }
@@ -64,13 +63,14 @@ if (!gotLock) {
     win.hide()
   }
 
-  // Used only by the global hotkey: toggles instead of always-show, so
-  // pressing it again while the window is already up and focused hides it
-  // back to tray — the quick-recall pattern (Spotlight/PowerToys Run style)
-  // rather than a one-way "always bring to front" action.
+  // Used by the global hotkey: toggles instead of always-show, so pressing it
+  // again while the window is up hides it back to tray — the quick-recall
+  // pattern (Spotlight/PowerToys Run style) rather than a one-way "always
+  // bring to front" action. Decided on isVisible() alone, not isFocused():
+  // isFocused() can't be trusted for this (see tray click comment below).
   function toggleWindowVisibility(): void {
     if (!win) return
-    if (win.isVisible() && win.isFocused()) {
+    if (win.isVisible()) {
       hideToTray()
     } else {
       showAndFocusWindow()
@@ -126,15 +126,22 @@ if (!gotLock) {
     tray = new Tray(trayIcon)
     tray.setToolTip('Dyadic')
 
-    // Left-click: always show-and-focus (not the toggle behavior — see
-    // showAndFocusWindow's comment above for why this stays one-way).
+    // Same toggle as the global hotkey. Safe from the earlier blur race
+    // because toggling is decided by isVisible() alone, and clicking the
+    // tray icon only steals focus (blur) — it never changes visibility.
     tray.on('click', () => {
-      showAndFocusWindow()
+      toggleWindowVisibility()
     })
 
-    tray.setContextMenu(
-      Menu.buildFromTemplate([
-        { label: 'Show', click: () => showAndFocusWindow() },
+    // Built fresh on every right-click (not tray.setContextMenu, which is
+    // static) so the label reflects current state instead of always saying
+    // "Show".
+    tray.on('right-click', () => {
+      const menu = Menu.buildFromTemplate([
+        {
+          label: win?.isVisible() ? 'Hide' : 'Show',
+          click: () => toggleWindowVisibility()
+        },
         { type: 'separator' },
         {
           label: 'Quit',
@@ -144,7 +151,8 @@ if (!gotLock) {
           }
         }
       ])
-    )
+      tray?.popUpContextMenu(menu)
+    })
   }
 
   // For each candidate in SHORTCUT_CANDIDATES: register() can return false

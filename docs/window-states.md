@@ -7,31 +7,26 @@ against Electron docs or by repeat hands-on testing on Windows.
 
 ## States
 
-| State | Meaning | On screen? | Has focus? |
-| --- | --- | --- | --- |
-| **Booting** | App starting, window not shown yet (`win` created with `show: false`). | no | no |
-| **Visible + focused** | Window shown, in front, receiving input. | yes | yes |
-| **Visible + unfocused** | Window shown, but another app has focus. | yes | no |
-| **Hidden (tray)** | Minimized then hidden — only the tray icon remains. | no | no |
-| **Quit** | `isQuitting` set, app shutting down. Terminal. | — | — |
+| State | Meaning | On screen? |
+| --- | --- | --- |
+| **Booting** | App starting, window not shown yet (`win` created with `show: false`). | no |
+| **Visible** | Window shown. May or may not have OS focus — both count as Visible. | yes |
+| **Hidden (tray)** | Minimized then hidden — only the tray icon remains. | no |
+| **Quit** | `isQuitting` set, app shutting down. Terminal. | — |
 
-> There is no stable "minimized but visible in the taskbar" state: the
-> `minimize` event handler immediately calls `hide()`, so a native minimize
-> lands the window in **Hidden (tray)**.
+> Only 2 real states matter for toggling: **Visible** and **Hidden (tray)**.
+> Toggle decisions are based on `isVisible()` alone, not focus — a visible
+> but unfocused window (e.g. you alt-tabbed away) stays Visible until
+> something explicit hides it. Nothing hides it automatically on blur.
 
-## Flowcharts
-
-Two views. **Schematic 1** — which routine each trigger runs. **Schematic 2** —
-what each routine (show / hide) actually does, step by step. Diamonds are yes/no
-decisions.
+## Flowchart
 
 ```mermaid
 flowchart TD
-  hk(["Global keyboard input"]) --> d1{"Window visible AND focused?"}
+  hk(["Hotkey · tray left-click"]) --> d1{"Window visible?"}
   d1 -- Yes --> HIDE(["HIDE TO TRAY"])
   d1 -- No --> SHOW(["SHOW & FOCUS"])
-  tr(["Tray click · 'Show' · 2nd launch · Boot"]) --> SHOW
-  mb(["Minimize button"]) --> HIDE
+  tr(["Tray right-click menu · 2nd launch · Boot"]) --> SHOW
   xb(["X / close button"]) --> d2{"Real quit? (tray 'Quit')"}
   d2 -- Yes --> QUIT(["APP QUITS"])
   d2 -- No --> HIDE
@@ -42,67 +37,52 @@ flowchart TD
   class QUIT stop;
 ```
 
-```mermaid
-flowchart TD
-  subgraph SHOWG["SHOW & FOCUS"]
-    direction TB
-    s1{"Already minimized?"} -- Yes --> r["Restore"]
-    s1 -- No --> sw["Show window"]
-    r --> sw
-    sw --> f["Give it focus"]
-  end
-  f --> vf(["Visible + focused"])
+`SHOW & FOCUS` = `showAndFocusWindow()`: `show()` then `focus()`. No `restore()`
+step — removed during testing; `show()` alone was enough to bring back a
+minimized window on this setup (see "Not yet verified" below).
 
-  subgraph HIDEG["HIDE TO TRAY"]
-    direction TB
-    mn["Minimize"] --> hd["Hide"]
-  end
-  hd --> ht(["Hidden in tray"])
-
-  classDef dec fill:#fef3c7,stroke:#d97706,color:#78350f;
-  classDef good fill:#dcfce7,stroke:#16a34a,color:#14532d;
-  classDef muted fill:#e5e7eb,stroke:#6b7280,color:#374151;
-  class s1 dec;
-  class vf good;
-  class ht muted;
-```
+`HIDE TO TRAY` = `hideToTray()`: `minimize()` then `hide()`.
 
 ## Transition table
 
 | From | Input / event | Action in code | To |
 | --- | --- | --- | --- |
-| Booting | first boot, `ready-to-show` | `showAndFocusWindow()` | Visible + focused |
-| Visible + focused | click another app | (OS-level, no handler) | Visible + unfocused |
-| Visible + focused | Global keyboard input | visible && focused → `hideToTray()` | Hidden (tray) |
-| Visible + focused | X button | `preventDefault()` + `hideToTray()` | Hidden (tray) |
-| Visible + focused | minimize button | `minimize` fires → `hide()` | Hidden (tray) |
-| Visible + focused | tray Quit | `isQuitting = true`, `app.quit()` | Quit |
-| Visible + unfocused | Global keyboard input | not focused → `showAndFocusWindow()` | Visible + focused |
-| Visible + unfocused | tray click / tray Show / second launch | `showAndFocusWindow()` | Visible + focused |
-| Visible + unfocused | X button | `hideToTray()` | Hidden (tray) |
-| Visible + unfocused | minimize button | `hide()` | Hidden (tray) |
-| Visible + unfocused | tray Quit | `app.quit()` | Quit |
-| Hidden (tray) | `Shift+Space` | not visible → `showAndFocusWindow()` | Visible + focused |
-| Hidden (tray) | tray click / tray Show / second launch | `showAndFocusWindow()` | Visible + focused |
-| Hidden (tray) | tray Quit | `app.quit()` | Quit |
+| Booting | first boot, `ready-to-show` | `showAndFocusWindow()` | Visible |
+| Visible | hotkey / tray left-click | `isVisible()` true → `hideToTray()` | Hidden (tray) |
+| Visible | X button | `preventDefault()` + `hideToTray()` | Hidden (tray) |
+| Visible | tray right-click → "Hide" | `hideToTray()` | Hidden (tray) |
+| Visible | tray "Quit" | `isQuitting = true`, `app.quit()` | Quit |
+| Visible | click another app | (OS-level, no handler) | Visible (unchanged — stays Visible, just unfocused) |
+| Hidden (tray) | hotkey / tray left-click | `isVisible()` false → `showAndFocusWindow()` | Visible |
+| Hidden (tray) | tray right-click → "Show" / second launch | `showAndFocusWindow()` | Visible |
+| Hidden (tray) | tray "Quit" | `app.quit()` | Quit |
 
-## The two rules the code is built around
+Tray left-click and the hotkey both call the same `toggleWindowVisibility()`.
+Tray right-click doesn't toggle directly — it opens a menu built fresh each
+time, with the label ("Show"/"Hide") reflecting current state; clicking that
+item calls the same toggle function.
 
-1. **Hiding is always minimize → hide** (`hideToTray()`). A bare `hide()` is
-   never used from a stable state; minimize first hands focus back to the
-   previously active app, then hide drops us to the tray.
-2. **Showing is always followed by focus** (`showAndFocusWindow()`): restore if
-   minimized, then `show()`, then `focus()` — `focus()` last so it isn't
-   dropped.
+## Why isFocused() isn't used
+
+Clicking the tray icon always blurs the main window first (OS behavior) —
+by the time the tray's `click` handler runs, `win.isFocused()` already reads
+`false`, regardless of what the window's real state was a moment earlier.
+That makes any toggle based on `isFocused()` at click-time indistinguishable
+between "was focused, click should hide" and "was already hidden" — it
+always resolved to show again (a visible hide→show flicker). Deciding on
+`isVisible()` alone sidesteps this, since blurring alone never changes
+visibility.
+
+Trade-off: a window that's visible but unfocused (e.g. you alt-tabbed away)
+will *hide* on the next toggle rather than come back to focus first. Accepted
+as out of scope for now.
 
 ## Not yet verified
 
 These are assumptions baked into the code, not confirmed facts:
 
-- That on Windows `show()` foregrounds the window, so `focus()` must come
-  **after** `show()`/`restore()` or it gets dropped. _(unverified)_
+- That `show()` alone (no `restore()`) reliably un-minimizes and focuses the
+  window on Windows, across repeated hide/show cycles, machines, and Windows
+  versions. Currently based on one round of manual testing. _(unverified)_
 - That a native `minimize` cannot be canceled (handler runs after the fact),
   which is why we route it to `hide()` rather than prevent it. _(unverified)_
-- That `Shift+Space` reliably re-focuses on every show across many cycles —
-  the toggle's "visible but unfocused → focus" path is the main risk area.
-  _(unverified)_
