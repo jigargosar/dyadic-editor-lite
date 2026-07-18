@@ -21,3 +21,10 @@ Goal (what, not how) and constraints, given once, built without checkpoints.
 - A dockable sidebar, kept out of the way unless opened.
 - Ctrl+T reopens the last closed tab.
 - Vim emulation is toggleable on/off, not always on.
+- Global hotkey and tray icon give quick show/hide access; closing the window minimizes to tray instead of quitting.
+- Find/replace works both within the current tab and across all tabs.
+- Tabs can be reordered by drag.
+- Explicitly out of scope: sync, cloud, multiple devices, a database.
+- A proper tray menu.
+- Fancy icons used throughout the app.
+- Slightly dark theme, fully polished, but yet minimalistic and clean interface.
