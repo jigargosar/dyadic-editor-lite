@@ -225,8 +225,9 @@ export default function App(): React.JSX.Element {
               )
               clearTimeout(saveTimerRef.current)
               saveTimerRef.current = setTimeout(() => {
-                window.api.saveTabContent(activeTabId as string, activeContentRef.current)
-                markSaved(activeTabId as string)
+                const id = activeTabId as string
+                const content = activeContentRef.current
+                window.api.saveTabContent(id, content).then(() => markSaved(id))
               }, SAVE_DEBOUNCE_MS)
             })
           ]
@@ -241,8 +242,8 @@ export default function App(): React.JSX.Element {
       cancelled = true
       clearTimeout(saveTimerRef.current)
       if (viewRef.current) {
-        window.api.saveTabContent(activeTabId as string, activeContentRef.current)
-        markSaved(activeTabId as string)
+        const id = activeTabId as string
+        window.api.saveTabContent(id, activeContentRef.current).then(() => markSaved(id))
         viewRef.current.destroy()
         viewRef.current = null
       }
@@ -253,8 +254,7 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     function flush(): void {
       if (activeTabId) {
-        window.api.saveTabContent(activeTabId, activeContentRef.current)
-        markSaved(activeTabId)
+        window.api.saveTabContent(activeTabId, activeContentRef.current).then(() => markSaved(activeTabId))
       }
     }
     window.addEventListener('blur', flush)
