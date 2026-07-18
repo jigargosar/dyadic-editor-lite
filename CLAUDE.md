@@ -26,7 +26,7 @@ There is **no test framework and no CI** — verify changes with `typecheck` and
 - **Persistence**: plain files under Electron `userData` — `tabs/<id>.txt` per tab + `session.json`, written atomically (temp-file-then-rename). Deliberately **no CRDT, no SQLite**.
 - **Autosave**: 300ms debounce (`SAVE_DEBOUNCE_MS`) plus flush on window blur / beforeunload / editor unmount; dirty tracking via a `dirtyIds` Set.
 - **Vim tab commands** (`:tabnew`, `:tabclose`, `gt`, etc.) are defined manually via `Vim.defineEx`/`Vim.map` (the library has none) — registered once module-wide, guarded against HMR double-registration.
-- **Window/tray (Windows-tuned, subtle)**: single-instance lock; close button and minimize both hide-to-tray (app stays resident, no quit-on-window-all-closed); global hotkey **Shift+Space** toggles visibility; show sequence must be restore→show→focus (focus last, for Windows); quit only via tray menu (`isQuitting` flag). See `docs/window-states.md` for the intended state machine.
+- **Window/tray (Windows-tuned, subtle)**: single-instance lock; close button and minimize both hide-to-tray (app stays resident, no quit-on-window-all-closed); global hotkeys **Ctrl+Shift+Space** and **Ctrl+Alt+Space** toggle visibility; show sequence must be restore→show→focus (focus last, for Windows); quit only via tray menu (`isQuitting` flag). See `docs/window-states.md` for the intended state machine.
 
 ## Conventions
 

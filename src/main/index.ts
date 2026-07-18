@@ -5,20 +5,20 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import trayIcon from '../../resources/tray.ico?asset'
 
-// Settled on Shift+Space after probing candidates on this machine — all of
-// these registered successfully except the two marked, so any could work,
-// but Shift+Space is what we're actually using. Left commented (not
-// deleted) as a record of what was tried and confirmed available:
-//   ✓ Shift+Space              <- active
+// Settled on Control+Shift+Space and Control+Alt+Space after probing candidates
+// on this machine — all of these registered successfully except the two
+// marked, so any could work. Left commented (not deleted) as a record of
+// what was tried and confirmed available:
+//   ✓ Shift+Space
 //   ✓ Control+Space
 //   ✓ Alt+Space
-//   ✓ Control+Shift+Space
-//   ✓ Control+Alt+Space
+//   ✓ Control+Shift+Space      <- active
+//   ✓ Control+Alt+Space        <- active
 //   ✓ Alt+Shift+Space
 //   ✗ Super+Space              (register() returned false — already taken)
 //   ✗ CommandOrControl+Space   (register() returned false — already taken)
 //   ✓ Control+Shift+Alt+Space
-const SHORTCUT_CANDIDATES = ['Shift+Space']
+const SHORTCUT_CANDIDATES = ['Control+Shift+Space', 'Control+Alt+Space']
 
 // A second launch attempt loses the race: quit before anything else in this
 // file runs, so it never opens its own window or touches the filesystem.

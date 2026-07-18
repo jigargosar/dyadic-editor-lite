@@ -27,7 +27,7 @@ decisions.
 
 ```mermaid
 flowchart TD
-  hk(["Shift+Space"]) --> d1{"Window visible AND focused?"}
+  hk(["Global keyboard input"]) --> d1{"Window visible AND focused?"}
   d1 -- Yes --> HIDE(["HIDE TO TRAY"])
   d1 -- No --> SHOW(["SHOW & FOCUS"])
   tr(["Tray click · 'Show' · 2nd launch · Boot"]) --> SHOW
@@ -73,11 +73,11 @@ flowchart TD
 | --- | --- | --- | --- |
 | Booting | first boot, `ready-to-show` | `showAndFocusWindow()` | Visible + focused |
 | Visible + focused | click another app | (OS-level, no handler) | Visible + unfocused |
-| Visible + focused | `Shift+Space` | visible && focused → `hideToTray()` | Hidden (tray) |
+| Visible + focused | Global keyboard input | visible && focused → `hideToTray()` | Hidden (tray) |
 | Visible + focused | X button | `preventDefault()` + `hideToTray()` | Hidden (tray) |
 | Visible + focused | minimize button | `minimize` fires → `hide()` | Hidden (tray) |
 | Visible + focused | tray Quit | `isQuitting = true`, `app.quit()` | Quit |
-| Visible + unfocused | `Shift+Space` | not focused → `showAndFocusWindow()` | Visible + focused |
+| Visible + unfocused | Global keyboard input | not focused → `showAndFocusWindow()` | Visible + focused |
 | Visible + unfocused | tray click / tray Show / second launch | `showAndFocusWindow()` | Visible + focused |
 | Visible + unfocused | X button | `hideToTray()` | Hidden (tray) |
 | Visible + unfocused | minimize button | `hide()` | Hidden (tray) |
