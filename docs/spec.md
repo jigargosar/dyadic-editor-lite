@@ -29,3 +29,12 @@ Goal (what, not how) and constraints, given once, built without checkpoints.
 - Fancy icons used throughout the app.
 - Slightly dark theme, fully polished, but yet minimalistic and clean interface.
 - Ctrl+Tab jumps to the most-recently-used tab, same as Chrome's Ctrl+Tab behavior.
+- All disk writes go through a single writer, eliminating concurrent-write races and corruption.
+- Beyond that, data-safety edge cases (failures, quitting mid-write, crashes, consistency) must be handled, without spending excessive time chasing rock-solid perfection.
+- Nice to have: zoom/font-size control, a settings surface for configurable options (storage folder, hotkeys, theme), word/character count.
+- Split view is explicitly out of scope.
+- Each tab is a plain text file on disk — not a database — so content stays portable, human-readable, and git-committable.
+- Cross-tab search and history are required, not optional. We accept the limits of not using a database for this, and won't build custom search/indexing infrastructure until a real problem is demonstrated at actual scale.
+- A settings dialog lets you change font size and choose among monospace fonts available locally on the system.
+- Keyboard shortcuts increase/decrease zoom (font size); a status bar at the bottom shows current state indicators — vim mode on/off, zoom level, and similar.
+- Launch on Windows startup (auto-start with the OS) is supported.
